@@ -1,18 +1,16 @@
 #include "main.h"
 #include "usart.h"
-#include <string.h>
 
 extern uint8_t rx_msg[UART_BUFFER_SIZE];
-extern uint8_t tx_msg[UART_BUFFER_SIZE];
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
 {
-    if (huart->Instance == USART1)
+    if ((huart == &huart1) &&
+        ((HAL_UARTEx_GetRxEventType(huart) == HAL_UART_RXEVENT_IDLE) ||
+         (HAL_UARTEx_GetRxEventType(huart) == HAL_UART_RXEVENT_TC)))
     {
-        memcpy(tx_msg,rx_msg,UART_BUFFER_SIZE);
+        HAL_UART_Transmit_IT(&huart1,rx_msg,Size);
 
-        HAL_UART_Transmit_IT(&huart1,tx_msg,UART_BUFFER_SIZE);
-
-        HAL_UART_Receive_DMA(&huart1,rx_msg,UART_BUFFER_SIZE);
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart1,rx_msg,UART_BUFFER_SIZE);
     }
 }
